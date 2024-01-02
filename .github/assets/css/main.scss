@@ -1,0 +1,17 @@
+---
+search: false
+---
+
+@charset "utf-8";
+
+@import "minimal-mistakes/skins/default";
+@import "minimal-mistakes";
+
+.page {
+  float: unset;
+  width: unset;
+}
+
+div.footnotes p {
+  margin: unset;
+}
