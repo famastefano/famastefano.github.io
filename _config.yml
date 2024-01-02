@@ -25,10 +25,6 @@ plugins:
   - jemoji
   - jekyll-include-cache
 
-author:
-  name   : "Stefano Famà"
-  avatar : "/assets/images/bio-photo.jpg"
-
 defaults:
   # _posts
   - scope:
