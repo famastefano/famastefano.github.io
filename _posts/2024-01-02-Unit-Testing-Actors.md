@@ -148,7 +148,7 @@ GEngine->TickDeferredCommands();
 
 This doesn't include *everything*, `Slate` isn't ticked, viewport isn't updated, seamless travel and async loading aren't updated either etc.
 
-I don't need them, but if you need do, look into `FEngineLoop::Tick`, `UGameEngine::Tick` and `UWorld::Tick`.
+I don't need them, but if you do, look into `FEngineLoop::Tick`, `UGameEngine::Tick` and `UWorld::Tick`.
 
 Now, let's create a C++ class `FTestWorldHelper`:
 ```cpp
