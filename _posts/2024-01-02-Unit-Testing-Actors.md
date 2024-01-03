@@ -13,26 +13,26 @@ To give you an idea on what I was able to do, here's one of the tests I wrote:
 ```cpp
 It("Should allow to fire again if enough time has passed", [this]
 {
-    FComponentOptions Opt;
-    Opt.FireRateRpm = 600;
-    Opt.HasInfiniteAmmo = true;
-    Opt.AmmoType.IsHitScan = true;
-    // Instantiate the component to test
-    auto* Component = CreateAndAttachComponent(Opt);
-    const double WaitingTimeBetweenEachShot = Component->GetSecondsBetweenShots() + 0.1;
-    Component->FireOnce();
-    
-    // Here we tick our world created ad-hoc for our tests
-    World.Tick(WaitingTimeBetweenEachShot);
-    Component->FireOnce();
-    
-    // We can choose a custom DeltaTime
-    World.Tick(WaitingTimeBetweenEachShot);
-    Component->FireOnce();
+  FComponentOptions Opt;
+  Opt.FireRateRpm = 600;
+  Opt.HasInfiniteAmmo = true;
+  Opt.AmmoType.IsHitScan = true;
+  // Instantiate the component to test
+  auto* Component = CreateAndAttachComponent(Opt);
+  const double WaitingTimeBetweenEachShot = Component->GetSecondsBetweenShots() + 0.1;
+  Component->FireOnce();
 
-    // Use the default DeltaTime if we don't care
-    World.Tick();
-    TestTrueExpr(DelegateHandler->OnShotFiredCounter == 3);
+  // Here we tick our world created ad-hoc for our tests
+  World.Tick(WaitingTimeBetweenEachShot);
+  Component->FireOnce();
+
+  // We can choose a custom DeltaTime
+  World.Tick(WaitingTimeBetweenEachShot);
+  Component->FireOnce();
+
+  // Use the default DeltaTime if we don't care
+  World.Tick();
+  TestTrueExpr(DelegateHandler->OnShotFiredCounter == 3);
 });
 ```
 
@@ -53,8 +53,8 @@ AGameModeBase* const GameMode = GetAuthGameMode(); // this just returns Authorit
 ...
 if (GameMode)
 {
-    GameMode->StartPlay();
-    ...
+  GameMode->StartPlay();
+  ...
 }
 ...
 ```
@@ -64,9 +64,9 @@ But when does a `UWorld` acquire get a `GameMode`? Here:
 ```cpp
 bool UWorld::SetGameMode(const FURL& InURL)
 {
-    ...
-    AuthorityGameMode = GetGameInstance()->CreateGameModeForURL(InURL, this);
-    ...
+  ...
+  AuthorityGameMode = GetGameInstance()->CreateGameModeForURL(InURL, this);
+  ...
 }
 ```
 `UGameInstance::CreateGameModeForURL` creates and initializes the correct `AGameModeBase` for *that level*.
@@ -78,30 +78,30 @@ Then, our Game Instance, `UTestWorldGameInstance`:
 UCLASS()
 class TESTWORLD_API UTestWorldGameInstance : public UGameInstance
 {
-	GENERATED_BODY()
+  GENERATED_BODY()
 
 public:
-	void InitForTest(UWorld& World)
-    {
-        FWorldContext* TestWorldContext = GEngine->GetWorldContextFromWorld(&World);
-        check(TestWorldContext);
-        WorldContext = TestWorldContext;
-        WorldContext->OwningGameInstance = this;
-        World.SetGameInstance(this);
-        World.SetGameMode(FURL()); // Now the UWorld::AuthorityGameMode will be valid
+  void InitForTest(UWorld& World)
+  {
+    FWorldContext* TestWorldContext = GEngine->GetWorldContextFromWorld(&World);
+    check(TestWorldContext);
+    WorldContext = TestWorldContext;
+    WorldContext->OwningGameInstance = this;
+    World.SetGameInstance(this);
+    World.SetGameMode(FURL()); // Now the UWorld::AuthorityGameMode will be valid
+    
+    Init();
+  }
 
-        Init();
-    }
-
-    // We don't care which game mode the base class has created, we always return ours.
-	virtual TSubclassOf<AGameModeBase> OverrideGameModeClass(
-        TSubclassOf<AGameModeBase> GameModeClass,
-	    const FString& MapName,
-        const FString& Options,
-	    const FString& Portal) const override
-        {
-            return ATestWorldGameMode::StaticClass();
-        }
+// We don't care which game mode the base class has created, we always return ours.
+  virtual TSubclassOf<AGameModeBase> OverrideGameModeClass(
+    TSubclassOf<AGameModeBase> GameModeClass,
+    const FString& MapName,
+    const FString& Options,
+    const FString& Portal) const override
+  {
+    return ATestWorldGameMode::StaticClass();
+  }
 };
 ```
 
@@ -115,10 +115,10 @@ By searching all references of `UWorld::Tick` you'll end up here:
 ```cpp
 void UGameEngine::Tick( float DeltaSeconds, bool bIdleMode )
 {
-    ...
-    // Tick the world.
-    Context.World()->Tick( LEVELTICK_All, DeltaSeconds );
-    ...
+  ...
+  // Tick the world.
+  Context.World()->Tick( LEVELTICK_All, DeltaSeconds );
+  ...
 }
 ```
 There's a lot of stuff that is "ticked" before and after that, so to actually do a proper tick we need to:
@@ -159,69 +159,69 @@ class UTestWorldSubsystem;
 
 class TESTWORLD_API FTestWorldHelper
 {
-    // Subsystem that manages the created Worlds
-	UTestWorldSubsystem* Subsystem;
-	UWorld* World;
-    // If NOT shared, then we need to cleanup it when we are destroyed
-	bool IsSharedWorld;
-	decltype(GFrameCounter) OldGFrameCounter;
-
-public:
-	explicit FTestWorldHelper() :
-		Subsystem(nullptr),
-		World(nullptr),
-		IsSharedWorld(false),
-		OldGFrameCounter(GFrameCounter)
-	{
-	}
-
-	explicit FTestWorldHelper(UTestWorldSubsystem* Subsystem,
-	                          UWorld* World,
-	                          bool IsSharedWorld)
-    : Subsystem(Subsystem),
-      World(World),
-      IsSharedWorld(IsSharedWorld),
-      OldGFrameCounter(GFrameCounter)
-    {}
-
-    // This class is like std::unique_ptr for UWorld instances
-	FTestWorldHelper(const FTestWorldHelper&) = delete;
-	FTestWorldHelper& operator=(const FTestWorldHelper&) = delete;
-
-	FTestWorldHelper(FTestWorldHelper&& Other) noexcept;
-	FTestWorldHelper& operator=(FTestWorldHelper&& Other) noexcept;
-
-	~FTestWorldHelper()
+  // Subsystem that manages the created Worlds
+  UTestWorldSubsystem* Subsystem;
+  UWorld* World;
+  // If NOT shared, then we need to cleanup it when we are destroyed
+  bool IsSharedWorld;
+  decltype(GFrameCounter) OldGFrameCounter;
+  
+  public:
+  explicit FTestWorldHelper() :
+           Subsystem(nullptr),
+           World(nullptr),
+           IsSharedWorld(false),
+           OldGFrameCounter(GFrameCounter)
+  {
+  }
+  
+  explicit FTestWorldHelper(UTestWorldSubsystem* Subsystem,
+                            UWorld* World,
+                            bool IsSharedWorld)
+  : Subsystem(Subsystem),
+    World(World),
+    IsSharedWorld(IsSharedWorld),
+    OldGFrameCounter(GFrameCounter)
+  {}
+  
+  // This class is like std::unique_ptr for UWorld instances
+  FTestWorldHelper(const FTestWorldHelper&) = delete;
+  FTestWorldHelper& operator=(const FTestWorldHelper&) = delete;
+  
+  FTestWorldHelper(FTestWorldHelper&& Other) noexcept;
+  FTestWorldHelper& operator=(FTestWorldHelper&& Other) noexcept;
+  
+  ~FTestWorldHelper()
+  {
+    // World created just for us, so destroy it as we don't need it anymore
+    if (World && !IsSharedWorld)
     {
-        // World created just for us, so destroy it as we don't need it anymore
-        if (World && !IsSharedWorld)
-        {
-            GFrameCounter = OldGFrameCounter;
-            Subsystem->DestroyPrivateWorld(World->GetFName());
-        }
+      GFrameCounter = OldGFrameCounter;
+      Subsystem->DestroyPrivateWorld(World->GetFName());
     }
+  }
+  
+  FORCEINLINE UWorld* operator->() const
+  {
+    check(World);
+    return World;
+  }
 
-	FORCEINLINE UWorld* operator->() const
-	{
-		check(World);
-		return World;
-	}
-
-    // Smallest DeltaTime with an exact representation.
-    // Personally I needed such a small default.
-	void Tick(float DeltaTime = 0.001953125) const
-    {
-        check(IsInGameThread());
-        check(World);
-        StaticTick(DeltaTime, !!GAsyncLoadingUseFullTimeLimit, GAsyncLoadingTimeLimit / 1000.f);
-        World->Tick(LEVELTICK_All, DeltaTime);
-        FTickableGameObject::TickObjects(nullptr, LEVELTICK_All, false, DeltaTime);
-        GFrameCounter++;
-        FTaskGraphInterface::Get().ProcessThreadUntilIdle(ENamedThreads::GameThread);
-        FThreadManager::Get().Tick();
-        FTSTicker::GetCoreTicker().Tick(DeltaTime);
-        GEngine->TickDeferredCommands();
-    }
+  // Smallest DeltaTime with an exact representation.
+  // Personally I needed such a small default.
+  void Tick(float DeltaTime = 0.001953125) const
+  {
+    check(IsInGameThread());
+    check(World);
+    StaticTick(DeltaTime, !!GAsyncLoadingUseFullTimeLimit, GAsyncLoadingTimeLimit / 1000.f);
+    World->Tick(LEVELTICK_All, DeltaTime);
+    FTickableGameObject::TickObjects(nullptr, LEVELTICK_All, false, DeltaTime);
+    GFrameCounter++;
+    FTaskGraphInterface::Get().ProcessThreadUntilIdle(ENamedThreads::GameThread);
+    FThreadManager::Get().Tick();
+    FTSTicker::GetCoreTicker().Tick(DeltaTime);
+    GEngine->TickDeferredCommands();
+  }
 };
 ```
 
@@ -234,84 +234,84 @@ Let's start by creating a `UTestWorldSubsystem`:
 USTRUCT()
 struct FTestWorldData
 {
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TObjectPtr<UGameInstance> GameInstance;
-
-	UPROPERTY()
-	TObjectPtr<UWorld> World;
+  GENERATED_BODY()
+  
+  UPROPERTY()
+  TObjectPtr<UGameInstance> GameInstance;
+  
+  UPROPERTY()
+  TObjectPtr<UWorld> World;
 };
 
 UCLASS()
 class TESTWORLD_API UTestWorldSubsystem : public UEngineSubsystem
 {
-	GENERATED_BODY()
-
-	TMap<FName, FTestWorldData> PrivateWorlds;
-
-	FTestWorldData SharedWorld;
-
-	static FTestWorldData MakeTestWorld(FName Name);
-
-public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override
+  GENERATED_BODY()
+  
+  TMap<FName, FTestWorldData> PrivateWorlds;
+  
+  FTestWorldData SharedWorld;
+  
+  static FTestWorldData MakeTestWorld(FName Name);
+  
+  public:
+  virtual void Initialize(FSubsystemCollectionBase& Collection) override
+  {
+    Super::Initialize(Collection);
+  }
+  
+  virtual void Deinitialize() override
+  {
+    // Dispose of the created Worlds
+    if (!PrivateWorlds.IsEmpty())
     {
-        Super::Initialize(Collection);
+      for (const auto& [Name, Env] : PrivateWorlds)
+      {
+        // This shouldn't happen, might want to log a warning
+        Env.World->DestroyWorld(true);
+        Env.GameInstance->RemoveFromRoot();
+      }
+      PrivateWorlds.Empty();
     }
-
-	virtual void Deinitialize() override
+  
+    if (SharedWorld.World)
     {
-        // Dispose of the created Worlds
-        if (!PrivateWorlds.IsEmpty())
-        {
-            for (const auto& [Name, Env] : PrivateWorlds)
-            {
-                // This shouldn't happen, might want to log a warning
-                Env.World->DestroyWorld(true);
-                Env.GameInstance->RemoveFromRoot();
-            }
-            PrivateWorlds.Empty();
-        }
-
-        if (SharedWorld.World)
-        {
-            SharedWorld.World->DestroyWorld(true);
-            SharedWorld.GameInstance->RemoveFromRoot();
-        }
-
-        Super::Deinitialize();
+      SharedWorld.World->DestroyWorld(true);
+      SharedWorld.GameInstance->RemoveFromRoot();
     }
-
-    FTestWorldHelper UTestWorldSubsystem::GetPrivateWorld(FName Name)
+    
+    Super::Deinitialize();
+  }
+  
+  FTestWorldHelper UTestWorldSubsystem::GetPrivateWorld(FName Name)
+  {
+    check(IsInGameThread());
+    checkf(PrivateWorlds.Find(Name) == nullptr, TEXT("This test world has already been created"));
+    
+    const auto& [GameInstance, World] = PrivateWorlds.Add(Name, MakeTestWorld(Name));
+    return FTestWorldHelper{this, World, false};
+  }
+  
+  FTestWorldHelper UTestWorldSubsystem::GetSharedWorld()
+  {
+    // Lazy initialize the shared World,
+    // because doing so in UEngineSubsystem::Initialize
+    // is too early!
+    if (!SharedWorld.World)
     {
-        check(IsInGameThread());
-        checkf(PrivateWorlds.Find(Name) == nullptr, TEXT("This test world has already been created"));
-
-        const auto& [GameInstance, World] = PrivateWorlds.Add(Name, MakeTestWorld(Name));
-        return FTestWorldHelper{this, World, false};
+      SharedWorld = MakeTestWorld("TestWorld_SharedWorld");
     }
-
-    FTestWorldHelper UTestWorldSubsystem::GetSharedWorld()
-    {
-        // Lazy initialize the shared World,
-        // because doing so in UEngineSubsystem::Initialize
-        // is too early!
-        if (!SharedWorld.World)
-        {
-            SharedWorld = MakeTestWorld("TestWorld_SharedWorld");
-        }
-
-        FTestWorldHelper Helper{this, SharedWorld.World, true};
-        return Helper;
-    }
-
-	void DestroyPrivateWorld(FName Name)
-    {
-        const auto& [GameInstance, World] = PrivateWorlds.FindAndRemoveChecked(Name);
-        World->DestroyWorld(true);
-        GameInstance->RemoveFromRoot();
-    }
+    
+    FTestWorldHelper Helper{this, SharedWorld.World, true};
+    return Helper;
+  }
+  
+  void DestroyPrivateWorld(FName Name)
+  {
+    const auto& [GameInstance, World] = PrivateWorlds.FindAndRemoveChecked(Name);
+    World->DestroyWorld(true);
+    GameInstance->RemoveFromRoot();
+  }
 };
 ```
 
@@ -319,38 +319,38 @@ Let's analyze how we create a test World:
 ```cpp
 FTestWorldData UTestWorldSubsystem::MakeTestWorld(FName Name)
 {
-	check(IsInGameThread());
-
-    // Create a Game World
-	FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
-	UWorld* World = UWorld::CreateWorld(EWorldType::Game, true, Name);
-	UTestWorldGameInstance* GameInstance = NewObject<UTestWorldGameInstance>();
-	GameInstance->AddToRoot(); // Avoids GC
-
-	WorldContext.SetCurrentWorld(World);
-	World->UpdateWorldComponents(true, true);
-	World->AddToRoot();
-	World->SetFlags(RF_Public | RF_Standalone);
-    // Engine shouldn't Tick this UWorld.
-	World->SetShouldTick(false);
-
-    // Remember UTestWorldGameInstance::InitForTest?
-	GameInstance->InitForTest(*World);
-
+  check(IsInGameThread());
+  
+  // Create a Game World
+  FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
+  UWorld* World = UWorld::CreateWorld(EWorldType::Game, true, Name);
+  UTestWorldGameInstance* GameInstance = NewObject<UTestWorldGameInstance>();
+  GameInstance->AddToRoot(); // Avoids GC
+  
+  WorldContext.SetCurrentWorld(World);
+  World->UpdateWorldComponents(true, true);
+  World->AddToRoot();
+  World->SetFlags(RF_Public | RF_Standalone);
+  // Engine shouldn't Tick this UWorld.
+  World->SetShouldTick(false);
+  
+  // Remember UTestWorldGameInstance::InitForTest?
+  GameInstance->InitForTest(*World);
+  
 #if WITH_EDITOR
-	GEngine->BroadcastLevelActorListChanged();
+  GEngine->BroadcastLevelActorListChanged();
 #endif
-
-	World->InitializeActorsForPlay(FURL());
-	auto* Settings = World->GetWorldSettings();
-    // Unreal clamps the DeltaTime
-	Settings->MinUndilatedFrameTime = 0.0001;
-	Settings->MaxUndilatedFrameTime = 10;
-
-    // Finally, we start playing
-	World->BeginPlay();
-
-	return {GameInstance, World};
+  
+  World->InitializeActorsForPlay(FURL());
+  auto* Settings = World->GetWorldSettings();
+  // Unreal clamps the DeltaTime
+  Settings->MinUndilatedFrameTime = 0.0001;
+  Settings->MaxUndilatedFrameTime = 10;
+  
+  // Finally, we start playing
+  World->BeginPlay();
+  
+  return {GameInstance, World};
 }
 ```
 
@@ -366,63 +366,64 @@ BEGIN_DEFINE_SPEC(FBallisticWeaponComponent_Spec, "WeaponSystemPlugin.Runtime.Ba
                   EAutomationTestFlags::ApplicationContextMask
                   | EAutomationTestFlags::HighPriority | EAutomationTestFlags::ProductFilter)
 
-	TObjectPtr<UTestWorldSubsystem> Subsystem;
-	FTestWorldHelper World;
-	TObjectPtr<AActor> Actor;
-	TObjectPtr<UBallisticWeaponComponent> PrevComponent;
-
-	struct FComponentOptions
-	{
-		...
-	};
-
-	UBallisticWeaponComponent* CreateAndAttachComponent(const FComponentOptions& Options = FComponentOptions())
-	{
-		...
-		return PrevComponent;
-	}
+  TObjectPtr<UTestWorldSubsystem> Subsystem;
+  FTestWorldHelper World;
+  TObjectPtr<AActor> Actor;
+  TObjectPtr<UBallisticWeaponComponent> PrevComponent;
+  
+  struct FComponentOptions
+  {
+    ...
+  };
+  
+  UBallisticWeaponComponent* CreateAndAttachComponent(const FComponentOptions& Options = FComponentOptions())
+  {
+    ...
+    return PrevComponent;
+  }
 
 END_DEFINE_SPEC(FBallisticWeaponComponent_Spec)
 
 void FBallisticWeaponComponent_Spec::Define()
 {
-	Describe("The Ballistic Weapon Component", [this]
-	{
-		BeforeEach([this]
-		{
-            // Get the subsystem once
-			if (!Subsystem)
-			{
-				Subsystem = GEngine->GetEngineSubsystem<UTestWorldSubsystem>();
-			}
-            // Get our shared world, but could be private as well
-			World = Subsystem->GetSharedWorld();
-
-            // We can spawn actors!
-			Actor = World->SpawnActor<ATestWorldActor>();
-		});
-
-		Describe("When trying to fire once", [this]
-		{
-			It("Cant fire because there is no ammo", [this]
-			{
-                // This creates a component and attaches it to the Actor.
-                // UBallisticWeaponComponent::BeginPlay will be called!
-				auto* Component = CreateAndAttachComponent();
-				Component->FireOnce();
-
-                // Tick our Test World, Actor::Tick and UBallisticWeaponComponent::TickComponent will be called!
-				World.Tick();
-				TestTrueExpr(DelegateHandler->OnShotFiredCounter == 0);
-			});
-        });
-
-        AfterEach([this]{
-            Actor->Destroy();
-			Actor = nullptr;
-			PrevComponent = nullptr;
-        });
+  Describe("The Ballistic Weapon Component", [this]
+  {
+    BeforeEach([this]
+    {
+      // Get the subsystem once
+      if (!Subsystem)
+      {
+        Subsystem = GEngine->GetEngineSubsystem<UTestWorldSubsystem>();
+      }
+      // Get our shared world, but could be private as well
+      World = Subsystem->GetSharedWorld();
+      // We can spawn actors!
+      Actor = World->SpawnActor<ATestWorldActor>();
     });
+    
+    Describe("When trying to fire once", [this]
+    {
+      It("Cant fire because there is no ammo", [this]
+      {
+        // This creates a component and attaches it to the Actor.
+        // UBallisticWeaponComponent::BeginPlay will be called!
+        auto* Component = CreateAndAttachComponent();
+        Component->FireOnce();
+        
+        // Tick our Test World:
+        // Actor::Tick
+        // UBallisticWeaponComponent::TickComponent
+        World.Tick();
+        TestTrueExpr(DelegateHandler->OnShotFiredCounter == 0);
+      });
+    });
+    
+    AfterEach([this]{
+      Actor->Destroy();
+      Actor = nullptr;
+      PrevComponent = nullptr;
+    });
+  });
 }
 ```
 
